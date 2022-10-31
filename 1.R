@@ -6,6 +6,7 @@ data(mtcars)
 
 data(iris)
 head(iris)
+tail(iris)
 
 library(ggplot2)
 
