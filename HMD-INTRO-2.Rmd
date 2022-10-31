@@ -1,0 +1,189 @@
+---
+title: "STATEC Workshop - Session 1"
+author: "Hamed Vaheb"
+date: "10/25/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+library(ggplot2)
+
+
+data(mtcars)
+
+ggplot(data = mtcars) + geom_point(aes(y = cyl, x = mpg))
+
+# calculate linear regression coefficient
+
+lm_mod <- lm(mtcars$cyl ~ mtcars$mpg)
+
+lm_mod$coefficients
+
+data(iris)
+```
+
+
+"https://gist.github.com/b-rodrigues/1e66297254e51ec409dc98376cbb009e"
+
+Add all files that got modified:
+git add .
+git commit -am "blablabla"
+git push origin main
+instead of origin, we could use URl of repository
+so its just a placeholder for URL
+
+
+if not the owner but user of repository wants to commit to branch,
+
+
+reverts the changes that hasn't commited
+git stash 
+git stash pop
+git stash drop
+
+revert you can go to many commits back
+git revert
+
+
+git blame my_script.R
+
+
+
+
+TEACHER:
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+
+mtcars <- rio::import("mtcars.csv")
+mtcars_dta <- rio::import("mtcars.dta")
+mtcars_sas <- rio::import("mtcars.sas7bdat")
+
+multi_xlsx <- rio::import_list("multi.xlsx")
+
+paths <- Sys.glob("unemployment/*.csv")
+
+unemployment <- rio::import_list(paths, rbind = TRUE)
+
+unemployment <- unemployment %>% 
+  janitor::clean_names() %>% 
+  #filter(commune %in% c("Luxembourg", "Esch-sur-Alzette", "Wiltz")) %>% 
+  group_by(commune) %>%
+  nest() %>% 
+  mutate(plot = map2(.x = data, .y = commune, ~ggplot(data = .x) +
+                       theme_minimal() +
+                       geom_line(aes(year, unemployment_rate_in_percent, group = 1)) +
+                       labs(title = paste("Unemployment in", .y))),
+         saved_plots = map2(.x = commune,
+                            .y = plot,
+                            ~ggsave(paste0("plot_for_", .x, ".pdf"),
+                                         .y)))
+
+
+
+
+log("10")
+
+s_log <- purrr::safely(log)
+
+s_log("10")
+
+purrr::possibly(log, otherwise = "error")("10")
+
+purrr::quietly(mean)("10")
+
+my_list <- list(10, 10)
+
+names(my_list) <- c("a", "b")
+
+my_list
+
+names(my_list)
+
+my_list
+
+purrr::map
+mean(c(1,2,3))
+
+mean(c(1,NA,3), na.rm = TRUE)
+
+map(c(1, 2, 3), sqrt)
+
+reduce(c(1, 2, 3), `+`)
+
+library(purrr)
+map
+install.packages("furrr")
+
+
+
+furrr::future_map
+
+
+
+dplyr::select(mtcars, am)
+
+
+
+
+
+simple_function <- function(dataset, col_name){
+  col_name <- as.name(col_name)
+  dataset %>%
+    group_by(col_name) %>%
+    summarise(mean_speed = mean(speed))
+}
+
+simple_function(mtcars, am)
+
+simple_function <- function(dataset, col_name = NULL){
+  col_name <- enquo(col_name)
+  print(col_name)
+  
+  dataset %>%
+    group_by(!!col_name) %>%
+    summarise(mean_mpg = mean(mpg))
+}
+
+simple_function(mtcars)
+
+
+
+
+
+
+a <- list(1, "a", 4, 5)
+
+map(a, sqrt)
+
+safe_sqrt <- safely(sqrt)
+
+result_a <- map(a, safe_sqrt)
+
+result_ta <- result_a %>% 
+  purrr::transpose()
+
+p_sqrt <- possibly(sqrt, otherwise = NULL)
+
+map(a, p_sqrt) 

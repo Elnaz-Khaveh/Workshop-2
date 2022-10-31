@@ -1,0 +1,199 @@
+---
+title: "STATEC Workshop - R Session 1"
+author: "Hamed Vaheb"
+date: "25/10/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(broom)
+library(reshape2)
+library(readr)
+library(readxl)
+#library(Ecdat)
+library(janitor)
+library(plm)
+library(pwt9)
+library(quarto)
+library(renv)
+library(shiny)
+library(targets)
+library(testthat)
+library(tidyverse)
+library(tibble)
+library(usethis)
+library(rio)
+library(lubridate)
+library(purrr)
+```
+We import data
+
+# Prepare
+
+First of all we import the dataset:
+```{r}
+mtcars <- rio::import("mtcars.csv")
+mtcars_dta <- rio::import("mtcars.dta")
+mccars_sas <- rio::import("mtcars.sas7bdat")
+
+multi_xlsx <- rio::import_list("multi.xlsx")
+
+#paths <- Sys.glob("unemployment/*.csv")
+#unemployment <- rio:: import_list(paths, rbind=True)
+
+
+urls <- c("https://raw.githubusercontent.com/b-rodrigues/modern_R/master/datasets/unemployment/unemp_2013.csv", 
+	  "https://raw.githubusercontent.com/b-rodrigues/modern_R/master/datasets/unemployment/unemp_2014.csv", 
+	  "https://raw.githubusercontent.com/b-rodrigues/modern_R/master/datasets/unemployment/unemp_2015.csv", 
+	  "https://raw.githubusercontent.com/b-rodrigues/modern_R/master/datasets/unemployment/unemp_2016.csv")
+
+## seting rbind == TRUE adds a column in which source the row (from which file) 
+unemployment <- rio::import_list(urls, rbind=TRUE)
+
+#unemployment <- lapply(urls, read.csv) %>% dplyr::bind_rows
+
+```
+
+
+```{r}
+starwars %>%
+  filter(!is.na(hair_color)) %>%
+  group_by(sex) %>%
+  summarise(mean_mass = mean(mass, na.rm=TRUE))
+  
+```
+
+```{r}
+10000000000
+print(nchar(10000000000))
+print(nchar("10000000000"))
+
+```
+
+```{r}
+starwars %>%
+  filter(gender == "masculine") %>%
+  group_by(sex) %>%
+  summarise(mean_height = mean(height, na.rm = TRUE))
+```
+
+
+
+```{r}
+unemp <- unemployment %>% 
+  janitor::clean_names() %>% 
+  filter(commune %in% c("Luxembourg", "Esch-sur-Alzette", "Wiltz")) %>% 
+  group_by(commune) %>%
+  nest() %>% 
+  mutate(plot = map2(.x = data, .y = commune, ~ggplot(data = .x) +
+                       theme_minimal() +
+                       geom_line(aes(year, unemployment_rate_in_percent, group = 1)) +
+                       labs(title = paste("Unemployment in", .y))),
+         saved_plots = map2(.x = commune,
+                            .y = plot,
+                            ~ggsave(paste0("plot_for_", .x, ".pdf"),
+                                         .y)))
+
+```
+
+
+r2u is to avoid 
+
+https://github.com/eddelbuettel/r2u
+
+
+Pure function: shouldn't depend on something outside of its scope
+Ex: shouldn't require seed before it
+
+
+Functional programming is declarative, as we state what we want
+
+library(withr) allows to rnorm with seed
+
+
+Running function with side effect of seed
+
+What we need is a wrapper for function os that it doesn't rely on anything from outside.
+
+
+if inside your function you load library, it is not pure
+because it changes the global state.
+
+higher-order function: takes or returns functions
+
+purrr:possibly
+purrr::quietly
+
+
+with_options
+to change parameters for functions
+```{r}
+map_dbl(c(1,2,3), sqrt)
+
+#reduce(c(1,2,3))
+```
+
+Functional code is very easy to parallelize
+and also use map and reduce in parallel
+Look here:
+https://www.brodrigues.co/blog/2019-10-05-parallel_maxlik/
+
+If we use map_future from the package furr
+we can replace it with any map function to run the map in parallel.
+
+furrr::feature_map
+
+dplyr:: select(mtcars, am)
+
+
+ls(mtcars)
+
+
+
+simple_function:
+don't evaluate it immediately, wait to diffuse it later,
+
+
+enquo: diffuses col_name
+!!col_name: (!!) now use it in context of global 
+
+
+colnames(iris)
+ls(iris)
+
+simple_function(iris, Species)
+
+Species 
+
+"Species" when I run it doesn't exist , but simple_function(iris, Species) then exists
+
+
+```{r}
+simple_function <- function(dataset, col_name){
+  #print(col_name)
+  col_name <- enquo(col_name)
+  #print(col_name)
+  dataset %>%
+    group_by(!!col_name) %>%
+    summarise(mean_mpg = mean(mpg))
+}
+
+
+simple_function(mtcars, mpg)
+```
+```{r}
+a <- list(1, "a", 4, 5)
+safe_sqrt <- safely(sqrt)
+result_a <- map(a, safe_sqrt)
+p_sqrt <- possibly(sqrt, otherwise = NULL)
+map(a, p_sqrt)
+```
+tidymodels.org/start/models
+
+ssh -T git@github.com
